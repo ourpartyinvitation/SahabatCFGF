@@ -1,115 +1,41 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: sans-serif;
+/* ... (Gunakan CSS sebelumnya, tambahkan ini di bawahnya) ... */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center; justify-content: center;
 }
 
-body { background-color: #f4f4f9; }
-
-.navbar {
-    background-color: #333;
-    color: white;
-    padding: 1rem 0;
+.modal-content {
+    background: white; padding: 30px; border-radius: 12px;
+    width: 90%; max-width: 400px;
 }
 
-.nav-content, .main-wrapper, .footer {
-    /* Membuat layout tetap ditengah dengan ukuran box spesifik */
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 0 20px;
+.cart-width { max-width: 600px; }
+
+.modal-content input {
+    width: 100%; padding: 12px; margin: 10px 0;
+    border: 1px solid #ddd; border-radius: 6px;
 }
 
-.nav-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.cart-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid #eee;
 }
 
-.main-wrapper {
-    display: flex;
-    gap: 30px;
-    margin-top: 20px;
-    min-height: 70vh; /* Memastikan footer selalu dibawah */
+.btn-primary, .btn-checkout {
+    background: #007bff; color: white; border: none;
+    padding: 10px 20px; border-radius: 6px; cursor: pointer;
 }
 
-.sidebar {
-    width: 200px;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    height: fit-content;
-}
+.btn-checkout { background: #28a745; width: 100%; font-size: 1.1rem; }
 
-.sidebar ul { list-style: none; }
-.sidebar ul li { margin-bottom: 10px; }
-.sidebar ul li a { text-decoration: none; color: #333; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 
-.content { flex-grow: 1; }
-
-/* Grid 3x3 untuk Desktop */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 20px;
-}
-
-.product-card {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.product-card img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-.product-card button {
-    margin-top: 10px;
-    padding: 8px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-top: 30px;
-    padding: 20px 0;
-}
-
-.footer {
-    text-align: center;
-    padding: 20px 0;
-    margin-top: 40px;
-    border-top: 1px solid #ccc;
-}
-
-/* Responsif untuk Mobile */
 @media (max-width: 768px) {
-    .main-wrapper {
-        flex-direction: column;
-    }
-    .sidebar {
-        width: 100%;
-    }
-    /* Berubah jadi 1 kolom di mobile */
-    .grid-container {
-        grid-template-columns: 1fr;
-    }
+    .grid-container { grid-template-columns: 1fr; }
+    .main-wrapper { padding: 10px; }
 }
