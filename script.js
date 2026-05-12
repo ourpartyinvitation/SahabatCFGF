@@ -1,92 +1,163 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9dq3rZ5BQlJXV_id4AkUs_4sXT-NVTvEhs2oSXRjnu6RmV3LSPXLnkPZyjqg8pcwGjA/exec';
 
 let allProducts = [];
-let currentPage = 1;
-const productsPerPage = 9; // Grid 3x3
 let cart = [];
+let currentUser = JSON.parse(localStorage.getItem('shop_user')) || null;
+let currentPage = 1;
+const productsPerPage = 9;
 
-// Fetch data saat halaman dimuat
 document.addEventListener('DOMContentLoaded', () => {
+    updateUserUI();
     fetchProducts();
 });
 
-async function fetchProducts() {
-    const grid = document.getElementById('product-grid');
-    grid.innerHTML = '<p>Memuat produk...</p>';
+// --- AUTHENTICATION ---
+function showLoginModal() { document.getElementById('login-modal').style.display = 'flex'; }
+function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'getProducts' })
-        });
-        const result = await response.json();
-        
-        if (result.status === 'success') {
-            allProducts = result.data;
-            renderGrid();
-        } else {
-            grid.innerHTML = '<p>Gagal memuat data.</p>';
-        }
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        // Fallback data statis untuk testing UI jika script URL belum siap
-        allProducts = Array.from({length: 12}, (_, i) => ({
-            kode_produk: `P0${i+1}`,
-            nama_produk: `Produk Demo ${i+1}`,
-            harga: 50000 + (i * 5000),
-            url_gambar: 'https://via.placeholder.com/150'
-        }));
-        renderGrid();
+async function handleLogin() {
+    const user = document.getElementById('login-user').value;
+    const pass = document.getElementById('login-pass').value;
+    
+    // Hash password sesuai permintaan (SHA256)
+    const passHash = CryptoJS.SHA256(pass).toString();
+
+    const resp = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+            action: 'login',
+            payload: { username: user, password: passHash }
+        })
+    });
+    
+    const result = await resp.json();
+    if (result.status === 'success') {
+        currentUser = result.data;
+        localStorage.setItem('shop_user', JSON.stringify(currentUser));
+        updateUserUI();
+        closeModals();
+    } else {
+        alert("Login Gagal: " + result.message);
     }
+}
+
+function logout() {
+    localStorage.removeItem('shop_user');
+    currentUser = null;
+    location.reload();
+}
+
+function updateUserUI() {
+    if (currentUser) {
+        document.getElementById('user-display').innerText = "Halo, " + currentUser.nama;
+        document.getElementById('login-nav-btn').style.display = 'none';
+        document.getElementById('logout-btn').style.display = 'inline';
+    }
+}
+
+// --- PRODUCT ENGINE ---
+async function fetchProducts() {
+    const resp = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' })});
+    const result = await resp.json();
+    allProducts = result.data;
+    renderGrid();
 }
 
 function renderGrid() {
     const grid = document.getElementById('product-grid');
     grid.innerHTML = '';
+    const start = (currentPage - 1) * productsPerPage;
+    const end = start + productsPerPage;
+    const items = allProducts.slice(start, end);
 
-    // Logika Paginasi
-    const startIndex = (currentPage - 1) * productsPerPage;
-    const endIndex = startIndex + productsPerPage;
-    const paginatedProducts = allProducts.slice(startIndex, endIndex);
-
-    paginatedProducts.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.innerHTML = `
-            <img src="${product.url_gambar || 'https://via.placeholder.com/150'}" alt="${product.nama_produk}">
-            <h4>${product.nama_produk}</h4>
-            <p>Rp ${product.harga ? product.harga.toLocaleString('id-ID') : '0'}</p>
-            <button onclick="addToCart('${product.kode_produk}')">Masukan Keranjang</button>
+    items.forEach(p => {
+        grid.innerHTML += `
+            <div class="product-card">
+                <img src="${p.url_gambar}" onerror="this.src='https://via.placeholder.com/150'">
+                <h4>${p.nama_produk}</h4>
+                <p>Rp ${Number(p.harga).toLocaleString('id-ID')}</p>
+                <p><small>Stok: ${p.stok_produk}</small></p>
+                <button onclick="addToCart('${p.kode_produk}')"> + Keranjang</button>
+            </div>
         `;
-        grid.appendChild(card);
+    });
+    renderPagination();
+}
+
+function renderPagination() {
+    const pages = Math.ceil(allProducts.length / productsPerPage);
+    const container = document.getElementById('pagination');
+    container.innerHTML = '';
+    for(let i=1; i<=pages; i++) {
+        container.innerHTML += `<button onclick="gotoPage(${i})" ${i==currentPage?'style="background:#333;color:white"':''}>${i}</button>`;
+    }
+}
+
+function gotoPage(p) { currentPage = p; renderGrid(); }
+
+// --- CART ENGINE ---
+function addToCart(kode) {
+    if (!currentUser) return showLoginModal();
+    const product = allProducts.find(p => p.kode_produk === kode);
+    const existing = cart.find(c => c.kode_produk === kode);
+
+    if (existing) {
+        existing.qty++;
+        existing.total_harga = existing.qty * existing.harga;
+    } else {
+        cart.push({ ...product, qty: 1, total_harga: product.harga });
+    }
+    updateCartUI();
+}
+
+function updateCartUI() {
+    document.getElementById('cart-count').innerText = cart.length;
+    const list = document.getElementById('cart-items-list');
+    list.innerHTML = '';
+    let total = 0;
+
+    cart.forEach((item, index) => {
+        total += Number(item.total_harga);
+        list.innerHTML += `
+            <div class="cart-item">
+                <span>${item.nama_produk} (x${item.qty})</span>
+                <span>Rp ${item.total_harga.toLocaleString('id-ID')}</span>
+                <button onclick="removeFromCart(${index})">❌</button>
+            </div>
+        `;
+    });
+    document.getElementById('cart-total-price').innerText = total.toLocaleString('id-ID');
+}
+
+function toggleCart() { document.getElementById('cart-modal').style.display = 'flex'; updateCartUI(); }
+
+function removeFromCart(i) { cart.splice(i, 1); updateCartUI(); }
+
+// --- CHECKOUT ENGINE ---
+async function processCheckout() {
+    if (cart.length === 0) return alert("Keranjang kosong!");
+    
+    const confirmPay = confirm("Lanjutkan pembayaran?");
+    if (!confirmPay) return;
+
+    const payload = {
+        id_user: currentUser.id_user,
+        items: cart
+    };
+
+    const resp = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'checkout', payload: payload })
     });
 
-    updatePaginationUI();
-}
-
-function changePage(direction) {
-    const totalPages = Math.ceil(allProducts.length / productsPerPage);
-    currentPage += direction;
-
-    if (currentPage < 1) currentPage = 1;
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    renderGrid();
-}
-
-function updatePaginationUI() {
-    const totalPages = Math.ceil(allProducts.length / productsPerPage);
-    document.getElementById('page-info').innerText = `Halaman ${currentPage} dari ${totalPages}`;
-    
-    document.getElementById('prev-btn').disabled = currentPage === 1;
-    document.getElementById('next-btn').disabled = currentPage === totalPages || totalPages === 0;
-}
-
-function addToCart(kode_produk) {
-    const product = allProducts.find(p => p.kode_produk === kode_produk);
-    if (product) {
-        cart.push(product);
-        document.getElementById('cart-count').innerText = cart.length;
-        alert(`${product.nama_produk} ditambahkan ke keranjang!`);
+    const result = await resp.json();
+    if (result.status === 'success') {
+        alert("Checkout Berhasil! ID Trx: " + result.data.id_trx);
+        cart = [];
+        updateCartUI();
+        closeModals();
+        fetchProducts(); // Refresh stok
+    } else {
+        alert("Gagal Checkout: " + result.message);
     }
 }
