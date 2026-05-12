@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Toko</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <h2>TokoKeren</h2>
+            <div class="cart-info">Keranjang: <span id="cart-count">0</span></div>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <!-- Sidebar Kategori -->
+        <aside class="sidebar">
+            <h3>Kategori</h3>
+            <ul id="category-list">
+                <li><a href="#" class="active">Semua</a></li>
+                <li><a href="#">Elektronik</a></li>
+                <li><a href="#">Pakaian</a></li>
+            </ul>
+        </aside>
+
+        <!-- Area Konten Utama -->
+        <main class="content">
+            <div id="product-grid" class="grid-container">
+                <!-- Produk dirender via JavaScript -->
+            </div>
+            
+            <!-- Paginasi yang tidak merusak struktur atas/samping -->
+            <div id="pagination" class="pagination-controls">
+                <button id="prev-btn" onclick="changePage(-1)">Sebelumnya</button>
+                <span id="page-info">Halaman 1</span>
+                <button id="next-btn" onclick="changePage(1)">Selanjutnya</button>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2026 TokoKeren. Hak Cipta Dilindungi.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
