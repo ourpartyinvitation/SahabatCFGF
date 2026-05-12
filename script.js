@@ -1,4 +1,4 @@
-const SCRIPT_URL = 'GANTI_DENGAN_URL_WEB_APP_APPS_SCRIPT_KAMU';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9dq3rZ5BQlJXV_id4AkUs_4sXT-NVTvEhs2oSXRjnu6RmV3LSPXLnkPZyjqg8pcwGjA/exec';
 
 let allProducts = [];
 let currentPage = 1;
