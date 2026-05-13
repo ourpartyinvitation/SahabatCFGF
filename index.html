@@ -3,61 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Box</title>
+    <title>Shopping Catalog</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-content">
-            <h2>📦 ShoppingBox</h2>
-            <div class="nav-buttons">
-                <span id="user-display"></span>
-                <button onclick="toggleCart()" id="cart-btn">🛒 (<span id="cart-count">0</span>)</button>
-                <button onclick="showLoginModal()" id="login-nav-btn">Login</button>
-                <button onclick="logout()" id="logout-btn" style="display:none;">Logout</button>
+            <h2>🛒 MyShop</h2>
+            <div class="nav-actions">
+                <span id="user-info"></span>
+                <button onclick="openCart()" id="cart-btn">Keranjang (<span id="cart-count">0</span>)</button>
+                <button onclick="openLogin()" id="login-btn">Login</button>
+                <button onclick="logout()" id="logout-btn" style="display:none">Logout</button>
             </div>
         </div>
     </nav>
 
-    <div class="main-wrapper">
+    <div class="main-container">
         <aside class="sidebar">
             <h3>Kategori</h3>
-            <ul>
-                <li><a href="#" onclick="filterCategory('Semua')">Semua</a></li>
-                <li><a href="#" onclick="filterCategory('Elektronik')">Elektronik</a></li>
-                <li><a href="#" onclick="filterCategory('Fashion')">Fashion</a></li>
+            <ul id="category-list">
+                <!-- Diisi otomatis oleh JS -->
             </ul>
         </aside>
 
-        <main class="content">
-            <div id="product-grid" class="grid-container"></div>
-            <div id="pagination" class="pagination-controls"></div>
+        <main class="content-area">
+            <div id="product-grid" class="grid-container">
+                <!-- Produk di sini -->
+            </div>
+            <div id="pagination" class="pagination-bar">
+                <!-- Paginasi di sini -->
+            </div>
         </main>
     </div>
 
+    <footer class="footer">
+        <p>&copy; 2026 E-Catalog System</p>
+    </footer>
+
+    <!-- Modal Login -->
     <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <h3>Login User</h3>
-            <input type="text" id="login-user" placeholder="Username">
-            <input type="password" id="login-pass" placeholder="Password">
-            <div class="modal-actions">
-                <button onclick="handleLogin()" class="btn-primary">Masuk</button>
+        <div class="modal-box">
+            <h3>Login</h3>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <div class="modal-btns">
+                <button onclick="doLogin()" class="btn-primary">Masuk</button>
                 <button onclick="closeModals()">Batal</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal Keranjang -->
     <div id="cart-modal" class="modal">
-        <div class="modal-content cart-width">
-            <h3>Keranjang Belanja</h3>
-            <div id="cart-items-list">
-                </div>
+        <div class="modal-box wide">
+            <h3>Keranjang Anda</h3>
+            <div id="cart-items"></div>
             <hr>
-            <div class="cart-summary">
-                <strong>Total: Rp <span id="cart-total-price">0</span></strong>
-            </div>
-            <div class="modal-actions">
-                <button onclick="processCheckout()" class="btn-checkout">Checkout & Bayar</button>
+            <p><strong>Total: Rp <span id="cart-total">0</span></strong></p>
+            <div class="modal-btns">
+                <button onclick="doCheckout()" class="btn-success">Checkout Sekarang</button>
                 <button onclick="closeModals()">Tutup</button>
             </div>
         </div>
