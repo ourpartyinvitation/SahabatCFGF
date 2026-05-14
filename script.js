@@ -110,15 +110,34 @@ function showStore() {
     loadData();
 }
 
+// async function loadData() {
+//     Swal.fire({ title: 'Memuat Produk...', didOpen: () => { Swal.showLoading() }, allowOutsideClick: false });
+//     try {
+//         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
+//         const json = await res.json();
+//         products = json.data;
+//         Swal.close();
+//         renderGrid();
+//     } catch(err) { Swal.fire('Error', 'Gagal memuat data produk.', 'error'); }
+// }
+
 async function loadData() {
     Swal.fire({ title: 'Memuat Produk...', didOpen: () => { Swal.showLoading() }, allowOutsideClick: false });
     try {
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
         const json = await res.json();
-        products = json.data;
-        Swal.close();
-        renderGrid();
-    } catch(err) { Swal.fire('Error', 'Gagal memuat data produk.', 'error'); }
+        
+        if (json.status === 'success') {
+            products = json.data;
+            Swal.close();
+            renderGrid();
+        } else {
+            // Tampilkan pesan error asli dari Google Script
+            Swal.fire('Error Backend', json.message, 'error');
+        }
+    } catch(err) { 
+        Swal.fire('Error Network', 'Gagal terhubung ke server atau URL salah.', 'error'); 
+    }
 }
 
 function renderGrid() {
