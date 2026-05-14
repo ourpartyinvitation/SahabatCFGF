@@ -3,68 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Catalog</title>
+    <title>SahabatCFGF | Autism Modern Store</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-content">
-            <h2>🛒 MyShop</h2>
-            <div class="nav-actions">
-                <span id="user-info"></span>
-                <button onclick="openCart()" id="cart-btn">Keranjang (<span id="cart-count">0</span>)</button>
-                <button onclick="openLogin()" id="login-btn">Login</button>
-                <button onclick="logout()" id="logout-btn" style="display:none">Logout</button>
+
+    <section id="landing-page" class="landing-cover">
+        <div class="glass-box animate__animated animate__zoomIn">
+            <h1>Sahabat<span>CFGF</span></h1>
+            <p>Eksplorasi Produk Terbaik dengan Harga Promo!</p>
+            <div class="landing-btns">
+                <button onclick="openAuth('login')" class="btn-glow">Login</button>
+                <button onclick="openAuth('register')" class="btn-ghost">Daftar</button>
             </div>
         </div>
-    </nav>
+    </section>
 
-    <div class="main-container">
-        <aside class="sidebar">
-            <h3>Kategori</h3>
-            <ul id="category-list">
-                <!-- Diisi otomatis oleh JS -->
-            </ul>
-        </aside>
-
-        <main class="content-area">
-            <div id="product-grid" class="grid-container">
-                <!-- Produk di sini -->
+    <div id="main-store" style="display:none;">
+        <nav class="navbar">
+            <div class="container nav-flex">
+                <h2 class="logo">Sahabat<span>CFGF</span></h2>
+                <div class="nav-right">
+                    <button class="btn-nav" onclick="toggleHistory()"><i class="fas fa-receipt"></i></button>
+                    <button class="btn-cart" onclick="toggleCart()">
+                        <i class="fas fa-shopping-bag"></i> <span id="cart-count">0</span>
+                    </button>
+                    <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
             </div>
-            <div id="pagination" class="pagination-bar">
-                <!-- Paginasi di sini -->
-            </div>
-        </main>
-    </div>
+        </nav>
 
-    <footer class="footer">
-        <p>&copy; 2026 E-Catalog System</p>
-    </footer>
-
-    <!-- Modal Login -->
-    <div id="login-modal" class="modal">
-        <div class="modal-box">
-            <h3>Login</h3>
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
-            <div class="modal-btns">
-                <button onclick="doLogin()" class="btn-primary">Masuk</button>
-                <button onclick="closeModals()">Batal</button>
-            </div>
+        <div class="container store-layout">
+            <aside class="sidebar">
+                <h3>Kategori</h3>
+                <ul id="cat-list"></ul>
+            </aside>
+            <main class="product-content">
+                <div id="product-grid" class="grid"></div>
+            </main>
         </div>
     </div>
 
-    <!-- Modal Keranjang -->
-    <div id="cart-modal" class="modal">
-        <div class="modal-box wide">
-            <h3>Keranjang Anda</h3>
-            <div id="cart-items"></div>
-            <hr>
-            <p><strong>Total: Rp <span id="cart-total">0</span></strong></p>
-            <div class="modal-btns">
-                <button onclick="doCheckout()" class="btn-success">Checkout Sekarang</button>
-                <button onclick="closeModals()">Tutup</button>
+    <!-- Modals (Auth, Cart, History) -->
+    <div id="modal-auth" class="modal">
+        <div class="modal-card animate__animated animate__fadeInDown">
+            <div id="form-login">
+                <h3>Selamat Datang Kembali</h3>
+                <input type="text" id="l-user" placeholder="Username">
+                <input type="password" id="l-pass" placeholder="Password">
+                <button onclick="handleLogin()" class="btn-action">Masuk</button>
             </div>
+            <div id="form-reg" style="display:none;">
+                <h3>Buat Akun Baru</h3>
+                <input type="text" id="r-nama" placeholder="Nama Lengkap">
+                <input type="email" id="r-email" placeholder="Email">
+                <input type="tel" id="r-tel" placeholder="WhatsApp (628...)">
+                <input type="text" id="r-user" placeholder="Username">
+                <input type="password" id="r-pass" placeholder="Password">
+                <button onclick="handleRegister()" class="btn-action">Daftar</button>
+            </div>
+            <div id="form-otp" style="display:none;">
+                <h3>Verifikasi OTP</h3>
+                <input type="text" id="v-otp" placeholder="6 Digit Kode">
+                <button onclick="handleVerify()" class="btn-action">Verifikasi</button>
+            </div>
+            <button class="btn-close-text" onclick="closeModal('modal-auth')">Tutup</button>
+        </div>
+    </div>
+
+    <div id="modal-cart" class="modal">
+        <div class="modal-card wide">
+            <h3>Keranjang Saya</h3>
+            <div id="cart-list-items" class="cart-scroll"></div>
+            <div class="voucher-box">
+                <input type="text" id="v-code" placeholder="Kode Voucher">
+                <button onclick="applyVoucher()">Pakai</button>
+            </div>
+            <div class="cart-footer">
+                <p>Total: <strong id="cart-total">0</strong></p>
+                <button onclick="handleCheckout()" class="btn-checkout">Bayar Sekarang</button>
+            </div>
+            <button class="btn-close-text" onclick="closeModal('modal-cart')">Kembali Belanja</button>
+        </div>
+    </div>
+
+    <div id="modal-history" class="modal">
+        <div class="modal-card wide">
+            <h3>Riwayat Transaksi</h3>
+            <div id="history-list" class="cart-scroll"></div>
+            <button class="btn-close-text" onclick="closeModal('modal-history')">Tutup</button>
         </div>
     </div>
 
