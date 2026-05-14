@@ -287,7 +287,7 @@ async function handleCheckout() {
                 text: 'Akan diarahkan ke WhatsApp Admin untuk pembayaran.',
                 confirmButtonText: 'Lanjut ke WhatsApp'
             }).then(() => {
-                window.open(`https://wa.me/6281234567890?text=${msg}`); // Ganti Nomor WA Admin di sini!
+                window.open(`https://wa.me/628999833375?text=${msg}`); // Ganti Nomor WA Admin di sini!
                 cart = []; discountVoucher = 0; document.getElementById('v-code').value = '';
                 updateCartUI(); closeModal('modal-cart'); loadData(); // Reload stok
             });
