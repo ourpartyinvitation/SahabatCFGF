@@ -1,128 +1,123 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbx9dq3rZ5BQlJXV_id4AkUs_4sXT-NVTvEhs2oSXRjnu6RmV3LSPXLnkPZyjqg8pcwGjA/exec';
-let allProducts = [];
-let cart = [];
-let user = JSON.parse(localStorage.getItem('user')) || null;
-let currentCat = 'Semua';
-let currentPage = 1;
-const perPage = 9;
+const API_URL = 'https://script.google.com/macros/s/AKfycbyA3Ko0ylLkwj3VU78z8WG5MUYLt432Cdu6LkrJDbp4ISN5Hx_2nk-MfwI-yMWtAg4Gyg/exec';
+let products = [], cart = [], user = JSON.parse(localStorage.getItem('sahabat_user')) || null;
+let currentCat = 'Semua', discountVoucher = 0, tempId = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-    checkUser();
+const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+
+document.addEventListener('DOMContentLoaded', () => { if (user) showStore(); });
+
+// AUTH LOGIC
+function openAuth(type) {
+    document.getElementById('modal-auth').style.display = 'flex';
+    document.getElementById('form-login').style.display = type === 'login' ? 'block' : 'none';
+    document.getElementById('form-reg').style.display = type === 'register' ? 'block' : 'none';
+}
+
+async function handleLogin() {
+    const payload = { username: document.getElementById('l-user').value, password: CryptoJS.SHA256(document.getElementById('l-pass').value).toString() };
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', payload }) });
+    const data = await res.json();
+    if(data.status === 'success') { user = data.data; localStorage.setItem('sahabat_user', JSON.stringify(user)); location.reload(); } else Swal.fire('Error', data.message, 'error');
+}
+
+// STORE LOGIC
+function showStore() {
+    document.getElementById('landing-page').style.display = 'none';
+    document.getElementById('main-store').style.display = 'block';
     loadData();
-});
-
-function checkUser() {
-    if (user) {
-        document.getElementById('user-info').innerText = `Hai, ${user.nama}`;
-        document.getElementById('login-btn').style.display = 'none';
-        document.getElementById('logout-btn').style.display = 'inline';
-    }
 }
 
 async function loadData() {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
     const json = await res.json();
-    allProducts = json.data;
-    renderCategories();
-    renderGrid();
-}
-
-function renderCategories() {
-    const cats = ['Semua', ...new Set(allProducts.map(p => p.kategori).filter(c => c))];
-    const container = document.getElementById('category-list');
-    container.innerHTML = cats.map(c => `<li class="${currentCat===c?'active':''}" onclick="setCat('${c}')">${c}</li>`).join('');
-}
-
-function setCat(c) {
-    currentCat = c;
-    currentPage = 1;
-    renderCategories();
+    products = json.data;
     renderGrid();
 }
 
 function renderGrid() {
-    const filtered = currentCat === 'Semua' ? allProducts : allProducts.filter(p => p.kategori === currentCat);
-    const start = (currentPage - 1) * perPage;
-    const paginated = filtered.slice(start, start + perPage);
-    
     const grid = document.getElementById('product-grid');
-    grid.innerHTML = paginated.map(p => `
-        <div class="product-card">
-            <img src="${p.url_gambar || 'https://via.placeholder.com/150'}">
-            <h4>${p.nama_produk}</h4>
-            <p>Rp ${Number(p.harga).toLocaleString()}</p>
-            <p><small>Stok: ${p.stok_produk}</small></p>
-            <button onclick="addToCart('${p.kode_produk}')">Tambah Keranjang</button>
-        </div>
-    `).join('');
-    
-    renderPagination(filtered.length);
+    grid.innerHTML = products.map(p => {
+        const pics = p.url_gambar.split(';').map(u => u.trim());
+        const isPromo = p.harga_promo && p.harga_promo < p.harga_asli;
+        const disc = isPromo ? Math.round((p.harga_asli - p.harga_promo) / p.harga_asli * 100) : 0;
+        return `
+            <div class="card animate__animated animate__fadeInUp">
+                ${isPromo ? `<div class="badge-disc">-${disc}%</div>` : ''}
+                <img src="${pics[0]}" onclick="viewDetail('${p.kode_produk}')">
+                <h4 style="margin:10px 0">${p.nama_produk}</h4>
+                <div style="margin-bottom:10px">
+                    ${isPromo ? `<span class="price-old">Rp ${p.harga_asli.toLocaleString()}</span>` : ''}
+                    <div class="price-new">Rp ${(isPromo ? p.harga_promo : p.harga_asli).toLocaleString()}</div>
+                </div>
+                <button class="btn-add-stock" onclick="addToCart('${p.kode_produk}')">
+                    <span><i class="fas fa-plus"></i> Keranjang</span>
+                    <span class="stock-label">Stok: ${p.stok_produk}</span>
+                </button>
+            </div>`;
+    }).join('');
 }
 
-function renderPagination(total) {
-    const pages = Math.ceil(total / perPage);
-    const container = document.getElementById('pagination');
-    container.innerHTML = '';
-    if (pages <= 1) return;
-    for (let i = 1; i <= pages; i++) {
-        container.innerHTML += `<button class="${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
-    }
-}
+function viewDetail(kode) {
+    const p = products.find(i => i.kode_produk === kode);
+    const pics = p.url_gambar.split(';').map(u => u.trim());
+    let imgs = `<div style="display:flex; gap:10px; overflow-x:auto; padding:10px">`;
+    pics.forEach(u => imgs += `<img src="${u}" style="width:150px; height:150px; object-fit:cover; border-radius:10px">`);
+    imgs += `</div>`;
 
-function goPage(i) { currentPage = i; renderGrid(); window.scrollTo(0,0); }
+    Swal.fire({
+        title: p.nama_produk,
+        html: `${imgs}<p style="text-align:left; color:#666; margin-top:15px">${p.keterangan_produk}</p>`,
+        confirmButtonText: 'Tambah Keranjang'
+    }).then(res => { if(res.isConfirmed) addToCart(kode); });
+}
 
 function addToCart(kode) {
-    if (!user) return openLogin();
-    const prod = allProducts.find(p => p.kode_produk === kode);
-    const exist = cart.find(item => item.kode_produk === kode);
-    if (exist) exist.qty++; else cart.push({...prod, qty: 1, total_harga: prod.harga});
-    updateCartBtn();
-    alert('Berhasil ditambah!');
+    const p = products.find(i => i.kode_produk === kode);
+    const price = p.harga_promo > 0 ? p.harga_promo : p.harga_asli;
+    const exist = cart.find(i => i.kode_produk === kode);
+    if(exist) exist.qty++; else cart.push({...p, price, qty: 1});
+    updateCartUI();
+    Toast.fire({ icon: 'success', title: 'Ditambahkan!' });
 }
 
-function updateCartBtn() {
+function updateCartUI() {
     document.getElementById('cart-count').innerText = cart.length;
+    let total = 0;
+    document.getElementById('cart-list-items').innerHTML = cart.map((item, idx) => {
+        const sub = item.price * item.qty;
+        total += sub;
+        return `<div style="display:flex; justify-content:space-between; margin-bottom:10px">
+            <span>${item.nama_produk} (x${item.qty})</span>
+            <span>Rp ${sub.toLocaleString()} <i class="fas fa-times" onclick="removeCart(${idx})" style="color:red; cursor:pointer"></i></span>
+        </div>`;
+    }).join('');
+    
+    const finalTotal = total - (total * (discountVoucher/100));
+    document.getElementById('cart-total').innerText = "Rp " + finalTotal.toLocaleString();
 }
 
-async function doCheckout() {
-    if (cart.length === 0) return alert('Keranjang kosong');
-    const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'checkout', payload: { id_user: user.id_user, items: cart } })
-    });
-    const json = await res.json();
-    if (json.status === 'success') {
-        alert('Sukses! ID: ' + json.data.id_trx);
-        cart = []; updateCartBtn(); closeModals(); loadData();
+async function applyVoucher() {
+    const code = document.getElementById('v-code').value;
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'checkVoucher', payload: { code } }) });
+    const data = await res.json();
+    if(data.status === 'success') {
+        discountVoucher = data.diskon;
+        Swal.fire('Berhasil!', `Voucher ${data.diskon}% aktif`, 'success');
+        updateCartUI();
+    } else Swal.fire('Gagal', data.message, 'error');
+}
+
+async function handleCheckout() {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'checkout', payload: { id_user: user.id_user, items: cart.map(i => ({...i, total_final: i.price * i.qty})) } }) });
+    const data = await res.json();
+    if(data.status === 'success') {
+        const msg = window.encodeURIComponent(`Halo Admin SahabatCFGF!\nSaya ${user.nama_lengkap} sudah checkout ID: ${data.id_trx}.\nTotal: ${document.getElementById('cart-total').innerText}`);
+        window.open(`https://wa.me/${user.phone}?text=${msg}`);
+        cart = []; updateCartUI(); closeModal('modal-cart');
     }
 }
 
-// Modal Helpers
-function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
-function openCart() { 
-    document.getElementById('cart-modal').style.display = 'flex';
-    const list = document.getElementById('cart-items');
-    let total = 0;
-    list.innerHTML = cart.map(item => {
-        total += (item.harga * item.qty);
-        return `<div style="display:flex; justify-content:space-between; margin-bottom:10px">
-            <span>${item.nama_produk} x${item.qty}</span>
-            <span>Rp ${(item.harga * item.qty).toLocaleString()}</span>
-        </div>`;
-    }).join('');
-    document.getElementById('cart-total').innerText = total.toLocaleString();
-}
-function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-
-async function doLogin() {
-    const u = document.getElementById('username').value;
-    const p = CryptoJS.SHA256(document.getElementById('password').value).toString();
-    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', payload: { username: u, password: p } }) });
-    const json = await res.json();
-    if (json.status === 'success') {
-        user = json.data;
-        localStorage.setItem('user', JSON.stringify(user));
-        location.reload();
-    } else alert('Gagal Login');
-}
-function logout() { localStorage.removeItem('user'); location.reload(); }
+function removeCart(idx) { cart.splice(idx, 1); updateCartUI(); }
+function toggleCart() { document.getElementById('modal-cart').style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function doLogout() { localStorage.removeItem('sahabat_user'); location.reload(); }
