@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbyA3Ko0ylLkwj3VU78z8WG5MUYLt432Cdu6LkrJDbp4ISN5Hx_2nk-MfwI-yMWtAg4Gyg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwffGeCoeGFLSKzKxfMcRerlvCiZOnFPf9Cs-XDdOyvnxM99qKsq5W91h8ASXD11Onzxg/exec';
 let products = [], cart = [], user = JSON.parse(localStorage.getItem('sahabat_user')) || null;
 let discountVoucher = 0, tempId = null;
 
